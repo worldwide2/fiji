@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ভেরিফিকেশন ডেমো</title>
+<style>
+  .logo-brand {
+    display: flex;         /* লোগো, ডিভাইডার এবং লেখাকে পাশাপাশি আনবে */
+    align-items: center;   /* সবকিছুকে লম্বালম্বি মাঝবরাবর রাখবে */
+    gap: 12px;             /* উপাদানগুলোর মাঝখানের ফাঁকা জায়গা */
+  }
+
+  .brand-logo {
+    height: 70px;          /* প্রয়োজন অনুযায়ী লোগোর সাইজ অ্যাডজাস্ট করুন */
+    width: auto;
+  }
+
+  .header-divider {
+    width: 2px;            /* ডিভাইডারের দাগের স্থূলতা */
+    height: 40px;          /* ডিভাইডারের উচ্চতা */
+    background-color: #ccc;/* ডিভাইডারের রঙ (যদি দাগটি না চান, তবে এটি বাদ দিতে পারেন) */
+  }
+
+  .brand-title {
+    font-size: 25px;
+    font-weight: bold;
+    color: #333;
+  }
+
+  * { box-sizing: border-box; margin: 0;  ; padding: 0; font-family: sans-serif;  }
+  body { background: #f4f6f9; min-height: 100vh; }
+  header { background: #0b1a4a; color: #fff; text-align: center; padding: 24px; }
+  header p { font-size: 14px; margin-top: 6px; opacity: .9; }
+  .container { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; padding: 32px 16px; }
+  .card { background: #fff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,.08); width: 100%; max-width: 420px; overflow: hidden; }
+  .card-header { background: #0b1a4a; color: #fff; padding: 16px 20px; font-weight: bold; }
+  .card-body { padding: 20px; }
+  label { display: block; font-size: 14px; margin-bottom: 6px; color: #333; }
+  label span { color: red; }
+  input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #f7f8fb; margin-bottom: 16px; font-size: 15px; }
+  input:focus { outline: none; border-color: #0b1a4a; }
+  button { width: 100%; padding: 12px; background: #0b1a4a; color: #fff; border: none; border-radius: 30px; font-size: 16px; cursor: pointer; }
+  button:hover { background: #162a6b; }
+  button:disabled { opacity: .6; cursor: not-allowed; }
+  .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+  .status-box { display: flex; gap: 12px; margin-bottom: 16px; }
+  .status-item { flex: 1; border: 1px solid #e3e6ee; border-radius: 10px; padding: 12px; }
+  .status-item small { font-size: 11px; color: #667; font-weight: bold; text-transform: uppercase; }
+  .status-item div { margin-top: 4px; font-weight: bold; }
+  .error { color: #c62828; font-size: 14px; margin-bottom: 12px; display: none; }
+  .valid { color: #2e7d32; }
+  .invalid { color: #c62828; }
+</style>
+</head>
+<body>
+
+  <div class="logo-brand">
+  <img  src="logo_img.svg" alt="Ministry of Immigration Logo" class="brand-logo"><div  class="header-divider"></div><div  class="brand-title">Ministry of Immigration - Fiji</div></div>
+<br>
+
+
+<br>
+<header>
+  <h1>Permit / Exemption Validation</h1>
+  <p>Please provide your Passport Number and Permit/Exemption No to verify.</p>
+</header>
+
+<div class="container">
+ 
+  <div class="card">
+    <div class="card-header">Provide information</div>
+    <div class="card-body">
+      <form id="verifyForm">
+        <label>Passport number <span>*</span></label>
+        <input type="text" id="idNumber" placeholder=" " required>
+
+        <label>Permit / Exemption No <span>*</span></label>
+        <input type="text" id="permitNumber" placeholder=" " required>
+
+        <div class="error" id="errorMsg"></div>
+        <button type="submit" id="verifyBtn">Verify</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- রেজাল্ট কার্ড -->
+  <div class="card">
+    <div class="card-header">Primary Applicant Details</div>
+    <div class="card-body">
+      <div class="status-box">
+        <div class="status-item">
+          <small>STATUS</small>
+          <div id="status">--</div>
+        </div>
+        <div class="status-item">
+          <small>VALIDITY DATE</small>
+          <div id="validity">--</div>
+        </div>
+      </div>
+      <div class="info-row"><span>Applicant Name :</span><span id="name">--</span></div>
+      <div class="info-row"><span>Permit No / Permit Type :</span><span id="type">--</span></div>
+      <div class="info-row"><span>Exemption  No :</span><span id="number">--</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  
+  const fakeDatabase = {
+    "A48951246": { name: "rafi", type: " Standard long-term work permit", permit: "p-7854120369", validity: "31-12-2029", status: "Approve" }
+  };
+
+  const form = document.getElementById("verifyForm");
+  const errorMsg = document.getElementById("errorMsg");
+  const btn = document.getElementById("verifyBtn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = "none";
+
+    const id = document.getElementById("idNumber").value.trim();
+    const permit = document.getElementById("permitNumber").value.trim();
+
+    btn.disabled = true;
+    btn.textContent = "Loading...";
+
+    try {
+     
+      await new Promise(r => setTimeout(r, 800)); 
+      const record = fakeDatabase[id];
+
+      if (record && record.permit === permit) {
+        showResult(record, true);
+      } else {
+        showResult(null, false);
+        errorMsg.textContent = "Information not found. Please try again.";
+        errorMsg.style.display = "block";
+      }
+    } catch (err) {
+      errorMsg.textContent = "There is a problem with the server.";
+      errorMsg.style.display = "block";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Verify";
+    }
+  });
+
+  function showResult(data, found) {
+    const set = (id, val) => document.getElementById(id).textContent = val;
+    if (found) {
+      set("status", data.status);
+      set("validity", data.validity);
+      set("name", data.name);
+      set("type", data.type);
+      set("number", data.permit);
+      document.getElementById("status").className = "valid";
+    } else {
+      ["status","validity","name","type","number"].forEach(id => set(id, "--"));
+    }
+  }
+</script>
+</body>
+</html>
